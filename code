@@ -1,0 +1,118 @@
+import mysql.connector
+from configparser import ConfigParser
+
+
+def readDbConfig(filename='config.ini', section='mysql'):
+    parser = ConfigParser()
+    parser.read(filename)
+    # read details from config.ini file
+    credentials = {}
+
+    if parser.has_section(section):
+        items = parser.items(section)
+        # loop through the items
+        for item in items:
+            # key, value pair (tuple)
+            credentials[item[0]] = item[1]
+
+        return credentials
+
+def displayGrade(lastName, firstName, province, grade):
+    credentials = readDbConfig()
+    connection = mysql.connector.MySQLConnection(**credentials)
+    # cursor initialization
+    cursor = connection.cursor()
+    cursor.execute(f"SELECT * FROM grades WHERE LName LIKE '%{lastName}%' AND FName LIKE '%{firstName}%'  AND Province LIKE '%{province}%'  AND Grade LIKE '%{grade}%'")
+    rows = cursor.fetchall()
+
+    # use loop to iterate through all the rows
+    print("\n\t<table>\n")
+    for row in rows:
+        print(f"\t\t<tr>\n\t\t\t<td>{row[0]}</td>\n\t\t\t<td>{row[1]}</td>\n\t\t\t<td>{row[2]}</td>\n\t\t\t<td>{row[3]}</td>\n\t\t</tr>")
+    print("\n\t</table>")
+
+    # close cursor
+    cursor.close()
+    # close connection
+    connection.close()
+
+def insertGrade(lastName, firstName, province, grade):
+    credentials = readDbConfig()
+    connection = mysql.connector.MySQLConnection(**credentials)
+    try:
+        # make a cursor
+        cursor = connection.cursor()
+        cursor.execute(f"INSERT INTO grades VALUES('{firstName}', '{lastName}', '{province}', '{grade}')")
+        connection.commit()
+
+    except:
+        print("Error")
+
+    # close cursor
+    cursor.close()
+    # close connection
+    connection.close()
+
+
+def deleteGrade(lastName, firstName, province, grade):
+    credentials = readDbConfig()
+    connection = mysql.connector.MySQLConnection(**credentials)
+    try:
+        # make a cursor
+        cursor = connection.cursor()
+        cursor.execute(f"DELETE FROM grades WHERE FName LIKE '%{firstName}%' AND LName LIKE '%{lastName}%' AND Province LIKE '%{province}%'  AND Grade LIKE '%{grade}%'")
+        connection.commit()
+
+    except:
+        print("Error")
+
+    # close cursor
+    cursor.close()
+    # close connection
+    connection.close()
+
+if __name__ == '__main__':
+    try_again = 'yes'
+
+    # iterate through while loop
+    while (try_again == 'yes'):
+        print("Type 1 - Enter a grade \nType 2 - Display a grade \nType 3 - Delete a grade \nType 4 - Exit \n")
+
+        try:
+            option = int(input("Enter option: "))
+            if option == 1:
+                print("Insert a row:")
+                firstName = input("\nFirstname : ")
+                lastName = input("\nLastname : ")
+                province = input("\nProvince : ")
+                grade = input("\nGrade : ")
+                insertGrade(lastName, firstName, province, grade)
+                print('---')
+
+            elif option == 2:
+                print("Search :")
+                firstName = input("\nFirstname : ")
+                lastName = input("\nLastname : ")
+                province = input("\nProvince : ")
+                grade = input("\nGrade : ")
+                # call the function to select rows from database table
+                displayGrade(lastName, firstName, province, grade)
+                print('---')
+
+            elif option == 3:
+                print("Delete:")
+                firstName = input("\nFirstname : ")
+                lastName = input("\nLastname : ")
+                province = input("\nProvince : ")
+                grade = input("\nGrade : ")
+                deleteGrade(lastName, firstName, province, grade)
+                print('---')
+
+            elif option == 4:
+                print("Exit \n---")
+                break
+
+        except ValueError:
+            print('Please choose a valid menu option')
+
+        try_again = input('Try again? yes or no\t')
